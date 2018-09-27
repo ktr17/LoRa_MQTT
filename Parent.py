@@ -32,6 +32,9 @@ def sendMqtt(mes):
 
 
 def main():
+    """
+    親スレッドが死なないようにしているだけ
+    """
     while True:
         sleep(1)
 

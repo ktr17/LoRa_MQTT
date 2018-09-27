@@ -15,5 +15,5 @@ class Config:
     mqttTopic = "Test"
 
 
-    debug_level = "DEBUG"
+    debug_level = "ALL"
 
