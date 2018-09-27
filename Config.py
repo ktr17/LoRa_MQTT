@@ -10,6 +10,10 @@ class Config:
     child_id = 2
     parent_id = 1
 
+    mqttHost = "127.0.0.1"
+    mqttPort = 1883
+    mqttTopic = "Test"
 
-    debug_level = "ALL"
+
+    debug_level = "DEBUG"
 

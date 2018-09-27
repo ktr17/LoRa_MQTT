@@ -4,22 +4,35 @@ import sys
 import serial
 from time import sleep, time
 
+import Log
 from Config import Config
 from Lora import Lora
-from Log import Log
+from Flags import Flags
 
 
-def main():
+flags = Flags()
+
+def checkAck(mes):
+    if mes.find("RSSI") >= 0:
+        flags.isAck = True
+
+def sendMes():
     __i = 1
+    device.send("{0:04d}{1:04d}{2:011d}".format(Config.panid, Config.parent_id, __i))
     while True:
-        device.send("{0:04d}{1:04d}{2:011d}".format(Config.panid, Config.gwid, __i))
-        __i = __i + 1
-        sleep(5) # 5秒ごとにデータを送る
-
+        sleep(2)
+        if flags.isAck:
+            __i = __i + 1
+            device.send("{0:04d}{1:04d}{2:011d}".format(Config.panid, Config.parent_id, __i))
+            flags.isAck = False
+        else:
+            device.send("{0:04d}{1:04d}{2:011d}".format(Config.panid, Config.parent_id, __i))
 
 if __name__ == "__main__":
     args = sys.argv
     serial_device_name = "/dev/ttyS0"
-    device = Lora(serial_device_name, args[1])
+    device = Lora(serial_device_name, args[0])
     sleep(5)
-    main()
+    device.addRecvlistener(checkAck)
+    sendMes()
+

@@ -6,12 +6,11 @@ from threading import Thread
 
 from Config import Config
 
-class Log(Thread):
+class Log():
     """ 各種ログ記録用クラス """
     __dirname = "logs"
 
     def __init__(self):
-        Thread.__init__(self)
         self.__checkDirectory()
         return
 
@@ -43,7 +42,3 @@ class Log(Thread):
             mkdir(Log.__dirname)  # ディレクトリ作成
         return
 
-def add(message, title="INFO"):
-    log = Log(message, title)
-    log.setDaemon(True)
-    log.start()

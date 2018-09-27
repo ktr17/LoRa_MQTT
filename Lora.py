@@ -18,7 +18,8 @@ class Lora:
             raise
         Lora.sendMessages = deque()
         Lora.recvListeners = []
-        self.nodeType = nodeType
+        Lora.nodeType = nodeType
+        Lora.log = Log()
 
         self.run()
         return
@@ -39,7 +40,7 @@ class Lora:
         Lora.send(["c", "{}".format(Config.sf)])  # sf
         Lora.send(["d", "{}".format(Config.channel)])  # channel
         Lora.send(["e", "{}".format(Config.panid)]) # panid
-        if self.nodeType == "Node.py":
+        if Lora.nodeType == "Node.py":
             Lora.send(["f", "{}".format(Config.child_id)])  # 子機ID
         else:
             Lora.send(["f", "{}".format(Config.parent_id)])  # 親機ID
@@ -103,7 +104,8 @@ class Lora:
             cmd = msg.strip()
             cmd = "{0}\r\n".format(cmd).encode()
             device.write(cmd)
-            Log.add(cmd)
+            Lora.log.add(cmd)
+
 
             # コマンド間隔 初期設定時
             if Lora.__isStart:
@@ -115,32 +117,6 @@ class Lora:
             if msg == "z":
                 Lora.__isStart = True
         return
-
-
-    # 取得したデータの抽出処理
-    @classmethod
-    def extraction_data(self, data="", target="srcid"):
-        # データがNULLのときは終了
-        extractionValue = ""
-        if not data:
-            Log.add("受信データの破損が疑われます.", "DEBUG")
-            return
-
-        if target == "srcid":
-            try:
-                data = data.split(" ")
-                extractionValue = int(data[8][:-1])
-            except Exception as e:
-                extractionValue = -1
-
-        elif target == "data":
-            try:
-                data = data.strip()
-                extractionValue = data.split("Data(")[1][:-1]
-            except Exception as e:
-                extractionValue = -1
-
-        return extractionValue
 
 
     # このスレッド内ですべての処理をする必要がある
@@ -161,7 +137,7 @@ class Lora:
             # UTF-8に変換できない例外(ES920LR電源投入時発生)
             try:
                 line = device.readline().decode("utf-8").strip()
-                Log.add(line)
+                Lora.log.add(line)
                 Lora.__isLock = False
             except UnicodeDecodeError:
                 continue
@@ -170,17 +146,10 @@ class Lora:
             if line == "OK" or line.find("NG") >= 0:
                 Lora.__isLock = False
 
-            if line.find("receive data info") >= 0:
-                src_id = Lora.extraction_data(data=line, target="srcid")
 
-            # filterにする
-            if line.find("RSSI") >= 0:
-                datum = Lora.extraction_data(data=line, target="data")
-
-            # メッセージを転送
+            # 関数にメッセージを転送
             for recvEvent in recvListeners:
                 recvEvent(line)
-            return
 
 
 def log_lora(serialDevice):
@@ -188,20 +157,20 @@ def log_lora(serialDevice):
         if serialDevice.inWaiting() > 0:
             line = serialDevice.readline()
             line = line.decode("utf-8")
-            Log.add(line)
+            Lora.log.add(line)
 
-if __name__=="__main__":
-    devName = input("DeviceName /dev/??? > ")
-    try:
-        serialDevice = serial.Serial("/dev/{}".format(devName), 115200)
-    except Exception as e:
-        Log.add(e)
-
-        thSerialDevice = Thread(target=log_lora, args=(serialDevice,))
-        thSerialDevice.setDaemon(True)
-        thSerialDevice.start()
-
-   while True:
-       preCmd = input("> ")
-       cmd = "{}\r\n".format(preCmd).encode()
-       serialDevice.write(cmd)
+#if __name__=="__main__":
+#    devName = input("DeviceName /dev/??? > ")
+#    try:
+#        serialDevice = serial.Serial("/dev/{}".format(devName), 115200)
+#    except Exception as e:
+#        Lora.log.add(e)
+#
+#        thSerialDevice = Thread(target=log_lora, args=(serialDevice,))
+#        thSerialDevice.setDaemon(True)
+#        thSerialDevice.start()
+#
+#    while True:
+#        preCmd = input("> ")
+#        cmd = "{}\r\n".format(preCmd).encode()
+#        serialDevice.write(cmd)
