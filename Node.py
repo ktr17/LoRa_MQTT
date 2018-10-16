@@ -16,6 +16,10 @@ def checkAck(mes):
     if mes.find("RSSI") >= 0:
         flags.isAck = True
 
+def recvParent(mes):
+    print(mes)
+
+
 def sendMes():
     __i = 1
     device.send("{0:04d}{1:04d}{2:011d}".format(Config.panid, Config.parent_id, __i))
@@ -28,11 +32,13 @@ def sendMes():
         else:
             device.send("{0:04d}{1:04d}{2:011d}".format(Config.panid, Config.parent_id, __i))
 
+
 if __name__ == "__main__":
     args = sys.argv
     serial_device_name = "/dev/ttyS0"
     device = Lora(serial_device_name, args[0])
     sleep(5)
     device.addRecvlistener(checkAck)
+    device.addRecvlistener(recvParent)
     sendMes()
 
